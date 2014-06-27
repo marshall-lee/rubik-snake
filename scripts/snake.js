@@ -146,7 +146,7 @@ $(window).on("load", function() {
           style: {
             color: __modulo(i, 2) === 0 ? [127, 0, 127] : [102, 230, 188],
             shademode: "lightsource",
-            linewidth: 1,
+            linewidth: 2,
             linescale: 0,
             drawmode: "wireframe",
             opacity: 0.98,

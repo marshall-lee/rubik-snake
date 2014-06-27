@@ -97,7 +97,7 @@ $(window).on "load", ->
         style:
           color: if i %% 2 == 0 then [127, 0, 127] else [102,230,188]
           shademode: "lightsource"
-          linewidth: 1
+          linewidth: 2
           linescale: 0
           drawmode: "wireframe"
           opacity: 0.98
