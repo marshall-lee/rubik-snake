@@ -10,20 +10,34 @@ requestAnimFrame = window.requestAnimationFrame || window.webkitRequestAnimation
 ANGLE_D = 5;
 
 $(window).on("load", function() {
-  var canvas, draw, renderer;
+  var canvas, draw, f, gui, mouse, renderer, rot, scene;
   canvas = $('#canvas').get(0);
   renderer = new Phoria.CanvasRenderer(canvas);
+  scene = new Phoria.Scene();
+  scene.camera.position = {
+    x: -10.0,
+    y: 15.0,
+    z: -15.0
+  };
+  scene.perspective.aspect = canvas.width / canvas.height;
+  scene.viewport.width = canvas.width;
+  scene.viewport.height = canvas.height;
+  mouse = Phoria.View.addMouseEvents(canvas);
+  rot = {
+    x: 0,
+    y: 0,
+    z: 0,
+    velx: 0,
+    vely: 0,
+    velz: 0,
+    nowx: 0,
+    nowy: 0,
+    nowz: 0,
+    ratio: 0.1
+  };
   draw = function(formula) {
-    var edges, fnAnimate, halfHeight, halfSideA, halfSideB, height, i, makeTurn, mouse, nextStep, plane, point, points, points1, points2, polygons, prism, prisms, rot, scene, sideA, sideB, turns, _i, _j, _len, _len1;
-    scene = new Phoria.Scene();
-    scene.camera.position = {
-      x: -10.0,
-      y: 15.0,
-      z: -15.0
-    };
-    scene.perspective.aspect = canvas.width / canvas.height;
-    scene.viewport.width = canvas.width;
-    scene.viewport.height = canvas.height;
+    var edges, fnAnimate, halfHeight, halfSideA, halfSideB, height, i, makeTurn, nextStep, plane, point, points, points1, points2, polygons, prism, prisms, sideA, sideB, turns, _i, _j, _len, _len1;
+    scene.graph = [];
     plane = Phoria.Util.generateTesselatedPlane(8, 8, 0, 20);
     scene.graph.push(Phoria.Entity.create({
       points: plane.points,
@@ -130,12 +144,12 @@ $(window).on("load", function() {
           edges: edges,
           polygons: polygons,
           style: {
-            color: __modulo(i, 2) === 0 ? [0, 0, 0] : [128, 128, 128],
+            color: __modulo(i, 2) === 0 ? [127, 0, 127] : [127, 255, 212],
             shademode: "lightsource",
             linewidth: 1,
             linescale: 0,
             drawmode: "wireframe",
-            opacity: 0.95,
+            opacity: 0.98,
             objectsortmode: "back"
           }
         });
@@ -160,19 +174,6 @@ $(window).on("load", function() {
         z: 1
       }
     }));
-    mouse = Phoria.View.addMouseEvents(canvas);
-    rot = {
-      x: 0,
-      y: 0,
-      z: 0,
-      velx: 0,
-      vely: 0,
-      velz: 0,
-      nowx: 0,
-      nowy: 0,
-      nowz: 0,
-      ratio: 0.1
-    };
     makeTurn = function(code, cbDone) {
       var angle, angleDelta, axis, currentAngle, direction, doRotate, doRotateAll, index, middlePrism, mq, n, nRotates, normal, p1, p2, prismSubset, q, slopingSide, transBackVector, transVector, _ref, _ref1;
       n = parseInt(code[0]);
@@ -229,37 +230,96 @@ $(window).on("load", function() {
     };
     setTimeout(nextStep, 0);
     fnAnimate = function() {
-      var mx, my, mz, qx, qy, qz, _k, _len2;
+      var mx, my, mz, qx, qy, qz;
       rot.nowx += (rot.velx = (mouse.velocityV - rot.x - rot.nowx) * rot.ratio);
       rot.nowy += (rot.vely = (rot.y - rot.nowy) * rot.ratio);
       rot.nowz += (rot.velz = (mouse.velocityH - rot.z - rot.nowz) * rot.ratio);
-      qx = quat.setAxisAngle(quat.create(), vec3.fromValues(0, 1, 0), -rot.velz * Phoria.RADIANS);
+      qx = quat.setAxisAngle(quat.create(), vec3.fromValues(1, 0, 0), -rot.velx * Phoria.RADIANS);
       mx = mat4.fromQuat(mat4.create(), qx);
       qy = quat.setAxisAngle(quat.create(), vec3.fromValues(0, 1, 0), -rot.vely * Phoria.RADIANS);
       my = mat4.fromQuat(mat4.create(), qy);
       qz = quat.setAxisAngle(quat.create(), vec3.fromValues(0, 0, 1), -rot.velz * Phoria.RADIANS);
       mz = mat4.fromQuat(mat4.create(), qz);
-      for (_k = 0, _len2 = prisms.length; _k < _len2; _k++) {
-        prism = prisms[_k];
-        vec4.transformQuat(prism.leftNormal, prism.leftNormal, qx);
-        vec4.transformQuat(prism.rightNormal, prism.rightNormal, qx);
-        mat4.mul(prism.matrix, mx, prism.matrix);
-        vec4.transformQuat(prism.leftNormal, prism.leftNormal, qy);
-        vec4.transformQuat(prism.rightNormal, prism.rightNormal, qy);
-        mat4.mul(prism.matrix, my, prism.matrix);
-        vec4.transformQuat(prism.leftNormal, prism.leftNormal, qz);
-        vec4.transformQuat(prism.rightNormal, prism.rightNormal, qz);
-        mat4.mul(prism.matrix, mz, prism.matrix);
-      }
+      scene.camera.position.x -= rot.velx / 4;
+      scene.camera.position.y -= rot.vely / 4;
+      scene.camera.position.z -= rot.velz / 4;
       scene.modelView();
       renderer.render(scene);
       return requestAnimFrame(fnAnimate);
     };
     return requestAnimFrame(fnAnimate);
   };
+  gui = new dat.GUI();
+  f = gui.addFolder('Perspective');
+  f.add(scene.perspective, "fov").min(5).max(175);
+  f.add(scene.perspective, "near").min(1).max(100);
+  f.add(scene.perspective, "far").min(1).max(1000);
+  f = gui.addFolder('Camera LookAt');
+  f.add(scene.camera.lookat, "x").min(-100).max(100);
+  f.add(scene.camera.lookat, "y").min(-100).max(100);
+  f.add(scene.camera.lookat, "z").min(-100).max(100);
+  f.open();
+  f = gui.addFolder('Camera Position');
+  f.add(scene.camera.position, "x").min(-100).max(100);
+  f.add(scene.camera.position, "y").min(-100).max(100);
+  f.add(scene.camera.position, "z").min(-100).max(100);
+  f.open();
+  f = gui.addFolder('Camera Up');
+  f.add(scene.camera.up, "x").min(-10).max(10).step(0.1);
+  f.add(scene.camera.up, "y").min(-10).max(10).step(0.1);
+  f.add(scene.camera.up, "z").min(-10).max(10).step(0.1);
   draw("9R2-9L2-8L2-7R2-6R2-6L2-5L3-4L2- 3R2-2R2-2L2");
-  return $("#drawButton").click(function(e) {
+  $("#drawButton").click(function(e) {
     e.preventDefault();
     return draw($("#formula").val());
+  });
+  $("#buttonCat").click(function(e) {
+    var formula;
+    e.preventDefault();
+    formula = "9R2-9L2-8L2-7R2-6R2-6L2-5L3-4L2-3R2-2R2-2L2";
+    $("#formula").val(formula);
+    return draw(formula);
+  });
+  $("#buttonWolf").click(function(e) {
+    var formula;
+    e.preventDefault();
+    formula = "2R2-3L2-4L2-5R2-6R2-7L2-8L2-10L2-10R2-12R2";
+    $("#formula").val(formula);
+    return draw(formula);
+  });
+  $("#buttonTerrier").click(function(e) {
+    var formula;
+    e.preventDefault();
+    formula = "1R2-2R2-3L2-4L2-6L2-6R2-7R2-9L2-10L2-10R2";
+    $("#formula").val(formula);
+    return draw(formula);
+  });
+  $("#buttonCook").click(function(e) {
+    var formula;
+    e.preventDefault();
+    formula = "2R2-3L2-4L3-5L3-5R3-7R2-8L2-9L1-6R3-6L2-10L1-9R2-10R1-11R1-12R2";
+    $("#formula").val(formula);
+    return draw(formula);
+  });
+  $("#buttonPropeller").click(function(e) {
+    var formula;
+    e.preventDefault();
+    formula = "3L3-4L1-4R1-5L1-7L3-8L1-8R1-11L3-9L1-12L1-12R1";
+    $("#formula").val(formula);
+    return draw(formula);
+  });
+  $("#buttonSnowflake").click(function(e) {
+    var formula;
+    e.preventDefault();
+    formula = "1R3-2L1-2R3-3L3-3R1-4L3-4R1-5L1-5R3-6L1-6R3-7L3-7R1-8L3-8R1-9L1-9R3-10L1-10R3-12L3-11R1-11L3-12R";
+    $("#formula").val(formula);
+    return draw(formula);
+  });
+  return $("#buttonBow").click(function(e) {
+    var formula;
+    e.preventDefault();
+    formula = "1R3-2L1-2R3-3L3-4R1-4L3-3R3-5L3-5R3-6L1-6R3-9L3-8R1-8L3-7R3-7L3-9R3-10L1-12R1-12L3-11R3-11L3-10R3";
+    $("#formula").val(formula);
+    return draw(formula);
   });
 });

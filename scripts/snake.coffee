@@ -10,13 +10,24 @@ ANGLE_D = 5
 $(window).on "load", ->
   canvas = $('#canvas').get(0)
   renderer = new Phoria.CanvasRenderer(canvas)
+  scene = new Phoria.Scene()
+  scene.camera.position = {x:-10.0, y:15.0, z:-15.0}
+  scene.perspective.aspect = canvas.width / canvas.height
+  scene.viewport.width = canvas.width
+  scene.viewport.height = canvas.height
+
+  # mouse rotation and position tracking
+  mouse = Phoria.View.addMouseEvents(canvas);
+   
+  # keep track of rotation
+  rot =
+    x: 0, y: 0, z: 0,
+    velx: 0, vely: 0, velz: 0,
+    nowx: 0, nowy: 0, nowz: 0,
+    ratio: 0.1
 
   draw = (formula) ->
-    scene = new Phoria.Scene()
-    scene.camera.position = {x:-10.0, y:15.0, z:-15.0}
-    scene.perspective.aspect = canvas.width / canvas.height
-    scene.viewport.width = canvas.width
-    scene.viewport.height = canvas.height
+    scene.graph = []
 
     # add a grid to help visualise camera position etc.
     plane = Phoria.Util.generateTesselatedPlane(8,8,0,20)
@@ -84,12 +95,12 @@ $(window).on "load", ->
         edges: edges
         polygons: polygons
         style:
-          color: if i %% 2 == 0 then [0, 0, 0] else [128,128,128]
+          color: if i %% 2 == 0 then [127, 0, 127] else [127,255,212]
           shademode: "lightsource"
           linewidth: 1
           linescale: 0
           drawmode: "wireframe"
-          opacity: 0.95
+          opacity: 0.98
           objectsortmode: "back"
       prism
       # prism.translateX(-sideA*12)
@@ -104,16 +115,6 @@ $(window).on "load", ->
     # add a light
     scene.graph.push Phoria.DistantLight.create
       direction: {x:0, y:-0.5, z:1}
-
-    # mouse rotation and position tracking
-    mouse = Phoria.View.addMouseEvents(canvas);
-     
-    # keep track of rotation
-    rot =
-      x: 0, y: 0, z: 0,
-      velx: 0, vely: 0, velz: 0,
-      nowx: 0, nowy: 0, nowz: 0,
-      ratio: 0.1
 
     makeTurn = (code, cbDone) ->
       n = parseInt(code[0])
@@ -187,29 +188,16 @@ $(window).on "load", ->
       rot.nowy += (rot.vely = (rot.y - rot.nowy) * rot.ratio)
       rot.nowz += (rot.velz = (mouse.velocityH - rot.z - rot.nowz) * rot.ratio)
 
-      qx = quat.setAxisAngle(quat.create(), vec3.fromValues(0,1,0), -rot.velz*Phoria.RADIANS)
+      qx = quat.setAxisAngle(quat.create(), vec3.fromValues(1,0,0), -rot.velx*Phoria.RADIANS)
       mx = mat4.fromQuat(mat4.create(), qx)
       qy = quat.setAxisAngle(quat.create(), vec3.fromValues(0,1,0), -rot.vely*Phoria.RADIANS)
       my = mat4.fromQuat(mat4.create(), qy)
       qz = quat.setAxisAngle(quat.create(), vec3.fromValues(0,0,1), -rot.velz*Phoria.RADIANS)
       mz = mat4.fromQuat(mat4.create(), qz)
 
-      # scene.camera.lookat.x += rot.velx/4
-      # scene.camera.lookat.y += rot.vely/4
-      # scene.camera.lookat.z += rot.velz/4
-
-      for prism in prisms
-        vec4.transformQuat(prism.leftNormal, prism.leftNormal, qx)
-        vec4.transformQuat(prism.rightNormal, prism.rightNormal, qx)
-        mat4.mul(prism.matrix, mx, prism.matrix)
-
-        vec4.transformQuat(prism.leftNormal, prism.leftNormal, qy)
-        vec4.transformQuat(prism.rightNormal, prism.rightNormal, qy)
-        mat4.mul(prism.matrix, my, prism.matrix)
-
-        vec4.transformQuat(prism.leftNormal, prism.leftNormal, qz)
-        vec4.transformQuat(prism.rightNormal, prism.rightNormal, qz)
-        mat4.mul(prism.matrix, mz, prism.matrix)
+      scene.camera.position.x -= rot.velx/4
+      scene.camera.position.y -= rot.vely/4
+      scene.camera.position.z -= rot.velz/4
 
       scene.modelView()
       renderer.render(scene)
@@ -218,26 +206,26 @@ $(window).on "load", ->
     requestAnimFrame(fnAnimate)
 
   # add GUI controls
-  # gui = new dat.GUI()
-  # f = gui.addFolder('Perspective')
-  # f.add(scene.perspective, "fov").min(5).max(175)
-  # f.add(scene.perspective, "near").min(1).max(100)
-  # f.add(scene.perspective, "far").min(1).max(1000)
-  # # f.open()
-  # f = gui.addFolder('Camera LookAt')
-  # f.add(scene.camera.lookat, "x").min(-100).max(100)
-  # f.add(scene.camera.lookat, "y").min(-100).max(100)
-  # f.add(scene.camera.lookat, "z").min(-100).max(100)
+  gui = new dat.GUI()
+  f = gui.addFolder('Perspective')
+  f.add(scene.perspective, "fov").min(5).max(175)
+  f.add(scene.perspective, "near").min(1).max(100)
+  f.add(scene.perspective, "far").min(1).max(1000)
   # f.open()
-  # f = gui.addFolder('Camera Position');
-  # f.add(scene.camera.position, "x").min(-100).max(100)
-  # f.add(scene.camera.position, "y").min(-100).max(100)
-  # f.add(scene.camera.position, "z").min(-100).max(100)
-  # f.open()
-  # f = gui.addFolder('Camera Up');
-  # f.add(scene.camera.up, "x").min(-10).max(10).step(0.1)
-  # f.add(scene.camera.up, "y").min(-10).max(10).step(0.1)
-  # f.add(scene.camera.up, "z").min(-10).max(10).step(0.1)
+  f = gui.addFolder('Camera LookAt')
+  f.add(scene.camera.lookat, "x").min(-100).max(100)
+  f.add(scene.camera.lookat, "y").min(-100).max(100)
+  f.add(scene.camera.lookat, "z").min(-100).max(100)
+  f.open()
+  f = gui.addFolder('Camera Position');
+  f.add(scene.camera.position, "x").min(-100).max(100)
+  f.add(scene.camera.position, "y").min(-100).max(100)
+  f.add(scene.camera.position, "z").min(-100).max(100)
+  f.open()
+  f = gui.addFolder('Camera Up');
+  f.add(scene.camera.up, "x").min(-10).max(10).step(0.1)
+  f.add(scene.camera.up, "y").min(-10).max(10).step(0.1)
+  f.add(scene.camera.up, "z").min(-10).max(10).step(0.1)
   # f = gui.addFolder('Spin Local Axis (or use mouse)')
   # f.add(rot, "x").min(-180).max(180)
   # f.add(rot, "y").min(-180).max(180)
@@ -250,4 +238,39 @@ $(window).on "load", ->
   $("#drawButton").click (e) ->
     e.preventDefault()
     draw($("#formula").val())
+  $("#buttonCat").click (e) ->
+    e.preventDefault()
+    formula = "9R2-9L2-8L2-7R2-6R2-6L2-5L3-4L2-3R2-2R2-2L2"
+    $("#formula").val(formula)
+    draw(formula)
+  $("#buttonWolf").click (e) ->
+    e.preventDefault()
+    formula = "2R2-3L2-4L2-5R2-6R2-7L2-8L2-10L2-10R2-12R2"
+    $("#formula").val(formula)
+    draw(formula)
+  $("#buttonTerrier").click (e) ->
+    e.preventDefault()
+    formula = "1R2-2R2-3L2-4L2-6L2-6R2-7R2-9L2-10L2-10R2"
+    $("#formula").val(formula)
+    draw(formula)
+  $("#buttonCook").click (e) ->
+    e.preventDefault()
+    formula = "2R2-3L2-4L3-5L3-5R3-7R2-8L2-9L1-6R3-6L2-10L1-9R2-10R1-11R1-12R2"
+    $("#formula").val(formula)
+    draw(formula)
+  $("#buttonPropeller").click (e) ->
+    e.preventDefault()
+    formula = "3L3-4L1-4R1-5L1-7L3-8L1-8R1-11L3-9L1-12L1-12R1"
+    $("#formula").val(formula)
+    draw(formula)
+  $("#buttonSnowflake").click (e) ->
+    e.preventDefault()
+    formula = "1R3-2L1-2R3-3L3-3R1-4L3-4R1-5L1-5R3-6L1-6R3-7L3-7R1-8L3-8R1-9L1-9R3-10L1-10R3-12L3-11R1-11L3-12R"
+    $("#formula").val(formula)
+    draw(formula)
+  $("#buttonBow").click (e) ->
+    e.preventDefault()
+    formula = "1R3-2L1-2R3-3L3-4R1-4L3-3R3-5L3-5R3-6L1-6R3-9L3-8R1-8L3-7R3-7L3-9R3-10L1-12R1-12L3-11R3-11L3-10R3"
+    $("#formula").val(formula)
+    draw(formula)
     
