@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Rubik snake</title>
+  <link rel="stylesheet" type="text/css" href="scripts/normalize.css">
+  <script type="text/javascript" src="scripts/jquery-1.11.1.min.js"></script>
+  <script type="text/javascript" src="scripts/gl-matrix.js"></script>
+  <script type="text/javascript" src="scripts/phoria-min.js"></script>
+  <script type="text/javascript" src="scripts/dat.gui.min.js"></script>
+  <script type="text/javascript" src="scripts/snake.js"></script>
+  <style>
+    #canvas {
+      float: left;
+    }
+    #menu {
+      float: left;
+      padding: 5px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" width="768" height="512" style="background-color: #eee"></canvas>
+  <div id="menu">
+    <div>
+      formula:
+    </div>
+    <textarea id="formula"></textarea>
+    <div>
+      <button id="drawButton">draw</button>
+    </div>
+  </div>
+</body>
+</html>
