@@ -144,7 +144,7 @@ $(window).on("load", function() {
           edges: edges,
           polygons: polygons,
           style: {
-            color: __modulo(i, 2) === 0 ? [127, 0, 127] : [127, 255, 212],
+            color: __modulo(i, 2) === 0 ? [127, 0, 127] : [102, 230, 188],
             shademode: "lightsource",
             linewidth: 1,
             linescale: 0,

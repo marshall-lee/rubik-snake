@@ -95,7 +95,7 @@ $(window).on "load", ->
         edges: edges
         polygons: polygons
         style:
-          color: if i %% 2 == 0 then [127, 0, 127] else [127,255,212]
+          color: if i %% 2 == 0 then [127, 0, 127] else [102,230,188]
           shademode: "lightsource"
           linewidth: 1
           linescale: 0
