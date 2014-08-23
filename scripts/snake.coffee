@@ -83,12 +83,16 @@ $(window).on "load", ->
       ]
 
       polygons = [
-        { vertices: [0, 1, 2] }
-        { vertices: [5, 4, 3] }
-        { vertices: [0, 3, 4, 1] } # [2] - left sloping side
-        { vertices: [1, 4, 5, 2] } # [3] - right sloping side
-        { vertices: [0, 2, 5, 3] }
+        { vertices: [2, 1, 0] }
+        { vertices: [3, 4, 5] }
+        { vertices: [1, 4, 3, 0] } # [2] - left sloping side
+        { vertices: [2, 5, 4, 1] } # [3] - right sloping side
+        { vertices: [3, 5, 2, 0] }
       ]
+
+      if i %% 2 == 1
+        for polygon in polygons
+          polygon.vertices.reverse()
 
       prism = Phoria.Entity.create
         points: points
