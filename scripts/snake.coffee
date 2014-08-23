@@ -97,18 +97,17 @@ $(window).on "load", ->
         style:
           color: if i %% 2 == 0 then [127, 0, 127] else [102,230,188]
           shademode: "lightsource"
-          linewidth: 2
-          linescale: 0
-          drawmode: "wireframe"
-          opacity: 0.98
-          objectsortmode: "back"
+          drawmode: "solid"
+          opacity: 1.0
       prism
       # prism.translateX(-sideA*12)
 
     for prism in prisms
       prism.generatePolygonNormals()
-      prism.leftNormal = vec3.clone(prism.polygons[2].normal)
-      prism.rightNormal = vec3.clone(prism.polygons[3].normal)
+      prism.leftSlopingSide = prism.polygons[2]
+      prism.rightSlopingSide = prism.polygons[3]
+      prism.leftNormal = vec3.clone(prism.leftSlopingSide.normal)
+      prism.rightNormal = vec3.clone(prism.rightSlopingSide.normal)
 
     scene.graph.push prism for prism in prisms
 
@@ -130,9 +129,9 @@ $(window).on "load", ->
       index = (n - 1) * 2
       middlePrism = prisms[index]
       [normal, slopingSide] = if direction == "L"
-        [middlePrism.leftNormal, middlePrism.polygons[2]]
+        [middlePrism.leftNormal, middlePrism.leftSlopingSide]
       else if direction == "R"
-        [middlePrism.rightNormal, middlePrism.polygons[3]]
+        [middlePrism.rightNormal, middlePrism.rightSlopingSide]
 
       p1 = middlePrism.points[slopingSide.vertices[0]]
       p2 = middlePrism.points[slopingSide.vertices[2]]

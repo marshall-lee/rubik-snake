@@ -146,11 +146,8 @@ $(window).on("load", function() {
           style: {
             color: __modulo(i, 2) === 0 ? [127, 0, 127] : [102, 230, 188],
             shademode: "lightsource",
-            linewidth: 2,
-            linescale: 0,
-            drawmode: "wireframe",
-            opacity: 0.98,
-            objectsortmode: "back"
+            drawmode: "solid",
+            opacity: 1.0
           }
         });
         _results.push(prism);
@@ -160,8 +157,10 @@ $(window).on("load", function() {
     for (_i = 0, _len = prisms.length; _i < _len; _i++) {
       prism = prisms[_i];
       prism.generatePolygonNormals();
-      prism.leftNormal = vec3.clone(prism.polygons[2].normal);
-      prism.rightNormal = vec3.clone(prism.polygons[3].normal);
+      prism.leftSlopingSide = prism.polygons[2];
+      prism.rightSlopingSide = prism.polygons[3];
+      prism.leftNormal = vec3.clone(prism.leftSlopingSide.normal);
+      prism.rightNormal = vec3.clone(prism.rightSlopingSide.normal);
     }
     for (_j = 0, _len1 = prisms.length; _j < _len1; _j++) {
       prism = prisms[_j];
@@ -182,7 +181,7 @@ $(window).on("load", function() {
       angle = 90 * nRotates;
       index = (n - 1) * 2;
       middlePrism = prisms[index];
-      _ref1 = direction === "L" ? [middlePrism.leftNormal, middlePrism.polygons[2]] : direction === "R" ? [middlePrism.rightNormal, middlePrism.polygons[3]] : void 0, normal = _ref1[0], slopingSide = _ref1[1];
+      _ref1 = direction === "L" ? [middlePrism.leftNormal, middlePrism.leftSlopingSide] : direction === "R" ? [middlePrism.rightNormal, middlePrism.rightSlopingSide] : void 0, normal = _ref1[0], slopingSide = _ref1[1];
       p1 = middlePrism.points[slopingSide.vertices[0]];
       p2 = middlePrism.points[slopingSide.vertices[2]];
       transVector = vec3.fromValues((p1.x + p2.x) / 2, (p1.y + p2.y) / 2, (p1.z + p2.z) / 2);
