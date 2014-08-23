@@ -102,7 +102,7 @@ $(window).on "load", ->
           color: if i %% 2 == 0 then [127, 0, 127] else [102,230,188]
           shademode: "lightsource"
           drawmode: "solid"
-          opacity: 1.0
+          opacity: 0.9
       prism
       # prism.translateX(-sideA*12)
 
